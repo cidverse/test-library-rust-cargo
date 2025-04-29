@@ -45,6 +45,4 @@ mod tests {
     fn test_multiply() {
         assert_eq!(Calculator::multiply(3, 7), 21);
     }
-
-    // Note: Not testing divide here, as per your request
 }

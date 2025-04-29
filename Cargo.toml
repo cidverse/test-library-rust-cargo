@@ -1,6 +1,11 @@
 [package]
-name = "calculator_lib"
+name = "test-library-rust-cargo"
 version = "0.1.0"
+description = "A test library for rust using cargo"
+readme = "README.md"
+homepage = "https://github.com/cidverse/test-library-rust-cargo"
+repository = "https://github.com/cidverse/test-library-rust-cargo"
+license = "MIT"
 edition = "2021"
 
 [dependencies]
