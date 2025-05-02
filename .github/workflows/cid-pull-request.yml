@@ -293,3 +293,167 @@ jobs:
           if-no-files-found: ignore
           compression-level: 6
           include-hidden-files: true
+  # zizmor-scan
+  zizmor-scan:
+    name: 'zizmor-scan'
+    runs-on: ubuntu-24.04 # https://github.com/actions/runner-images
+    permissions:
+      id-token: write # provenance signing
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          disable-telemetry: true
+          disable-sudo: true
+          egress-policy: "${{ env.EGRESS_POLICY }}"
+          allowed-endpoints: >-
+            github.com:443
+            api.github.com:443
+            codeload.github.com:443
+            uploads.github.com:443
+            objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            ghcr.io:443
+            pkg-containers.githubusercontent.com:443
+      - name: Setup Tools
+        uses: cidverse/ghact-cid-setup@c6dac0517d28bd8871c195fee9a6bd5a5854d5cb # v0.2.0
+        with:
+          version: "v0.5.0"
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Action - zizmor-scan
+        env:
+          CID_WORKFLOW: "${{ env.CID_WORKFLOW }}"
+          CID_LOGLEVEL: "${{ env.CID_LOGLEVEL }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_HOSTNAME: "${{ vars.GH_HOSTNAME }}"
+          GH_TOKEN: "${{ vars.GH_TOKEN }}"
+        run: |
+          cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-github.json" --state-wf-name "pull-request" --step "zizmor-scan"
+      - name: Upload Outputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: "zizmor-scan-${{ github.run_id }}"
+          path: ".dist/zizmor-scan/"
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 6
+          include-hidden-files: true
+  # github-pr-comment
+  github-pr-comment:
+    name: 'github-pr-comment'
+    runs-on: ubuntu-24.04 # https://github.com/actions/runner-images
+    needs: [cargo-test-test-library-rust-cargo]
+    permissions:
+      id-token: write # provenance signing
+      pull-requests: write # post pr comment
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          disable-telemetry: true
+          disable-sudo: true
+          egress-policy: "${{ env.EGRESS_POLICY }}"
+          allowed-endpoints: >-
+            github.com:443
+            api.github.com:443
+            codeload.github.com:443
+            uploads.github.com:443
+            objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            ghcr.io:443
+            pkg-containers.githubusercontent.com:443
+      - name: Setup Tools
+        uses: cidverse/ghact-cid-setup@c6dac0517d28bd8871c195fee9a6bd5a5854d5cb # v0.2.0
+        with:
+          version: "v0.5.0"
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download Inputs > cargo-test-test-library-rust-cargo
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: "cargo-test-test-library-rust-cargo-${{ github.run_id }}"
+          path: ".dist/cargo-test-test-library-rust-cargo"
+        continue-on-error: true
+      - name: Action - github-pr-comment
+        env:
+          CID_WORKFLOW: "${{ env.CID_WORKFLOW }}"
+          CID_LOGLEVEL: "${{ env.CID_LOGLEVEL }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-github.json" --state-wf-name "pull-request" --step "github-pr-comment"
+      - name: Upload Outputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: "github-pr-comment-${{ github.run_id }}"
+          path: ".dist/github-pr-comment/"
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 6
+          include-hidden-files: true
+  # codecov-upload
+  codecov-upload:
+    name: 'codecov-upload'
+    runs-on: ubuntu-24.04 # https://github.com/actions/runner-images
+    needs: [cargo-test-test-library-rust-cargo]
+    permissions:
+      id-token: write # provenance signing
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          disable-telemetry: true
+          disable-sudo: true
+          egress-policy: "${{ env.EGRESS_POLICY }}"
+          allowed-endpoints: >-
+            ingest.codecov.io:443
+            storage.googleapis.com:443
+            github.com:443
+            api.github.com:443
+            codeload.github.com:443
+            uploads.github.com:443
+            objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            ghcr.io:443
+            pkg-containers.githubusercontent.com:443
+      - name: Setup Tools
+        uses: cidverse/ghact-cid-setup@c6dac0517d28bd8871c195fee9a6bd5a5854d5cb # v0.2.0
+        with:
+          version: "v0.5.0"
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download Inputs > cargo-test-test-library-rust-cargo
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: "cargo-test-test-library-rust-cargo-${{ github.run_id }}"
+          path: ".dist/cargo-test-test-library-rust-cargo"
+        continue-on-error: true
+      - name: Action - codecov-upload
+        env:
+          CID_WORKFLOW: "${{ env.CID_WORKFLOW }}"
+          CID_LOGLEVEL: "${{ env.CID_LOGLEVEL }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+        run: |
+          cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-github.json" --state-wf-name "pull-request" --step "codecov-upload"
+      - name: Upload Outputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: "codecov-upload-${{ github.run_id }}"
+          path: ".dist/codecov-upload/"
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 6
+          include-hidden-files: true
